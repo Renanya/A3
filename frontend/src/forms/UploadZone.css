@@ -1,0 +1,191 @@
+/* AI Assisted CSS 2025*/
+/* ---- Variables (optional) ---- */
+:root {
+  --primary: #4a90e2;
+  --primary-dark: #357ab8;
+  --text: #222;
+  --muted: #6b7280;
+  --bg: #f7f9fc;
+  --border: #e5e7eb;
+  --danger: #e03131;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+/* ---- Layout ---- */
+.Upload-form {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+}
+
+/* ---- Clickable upload area ---- */
+.clickzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  height: 320px;                 /* adjust if you like */
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+  padding: 24px;
+  user-select: none;
+  outline: none;
+  transition: border-color .2s ease, background .2s ease, transform .05s ease;
+  cursor: pointer;
+}
+
+.clickzone:hover {
+  background: var(--bg);
+  border-color: #d1d5db;
+}
+
+.clickzone:active {
+  transform: translateY(1px);
+}
+
+.clickzone:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74,144,226,0.25);
+}
+
+.clickzone svg {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+}
+
+.clickzone p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ---- Below the zone ---- */
+.below-Upload {
+  margin-top: 16px;
+}
+
+/* Buttons row */
+.Upload-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.remove-button,
+.upload-button {
+  appearance: none;
+  border: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform .05s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.remove-button {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.remove-button:hover {
+  background: var(--bg);
+}
+
+.upload-button {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.upload-button:hover {
+  background: var(--primary-dark);
+}
+
+/* ---- File lists ---- */
+.accepted-title,
+.rejected-title {
+  margin: 14px 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.accepted-list,
+.reject-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.accepted-card,
+.rejected-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+.accepted-card p,
+.rejected-card p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.rejected-card {
+  border-color: #ffd1d1;
+  background: #fff7f7;
+}
+
+.rejected-card ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+/* close (X) button */
+.x-button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  cursor: pointer;
+}
+
+.x-button:hover {
+  background: var(--bg);
+}
+
+.text-danger { color: var(--danger); }
+
+/* ---- Small screens ---- */
+@media (max-width: 520px) {
+  .clickzone { height: 260px; padding: 18px; }
+  .Upload-buttons { flex-direction: column; }
+  .remove-button, .upload-button { width: 100%; text-align: center; }
+}

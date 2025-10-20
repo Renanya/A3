@@ -1,0 +1,209 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Launch an Ubuntu EC2 instance for Assessment 2 (Group 4) with Cognito, S3 and Parameters.
+
+Parameters:
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0279a86684f669718
+    Description: Ubuntu AMI ID to use (must be valid in target region)
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedPattern: ^[a-z0-9.]+$
+    Description: EC2 instance type
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: n11288353
+    Description: Existing EC2 key pair name
+
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-075811427d5564cf9
+    Description: Subnet to place the instance in
+
+  QutUsername:
+    Type: String
+    Default: n11288353@qut.edu.au
+    Description: Your QUT username (for tagging)
+  QutUsername2:
+    Type: String
+    Default: n8319065@qut.edu.au
+    Description: Your partner's QUT username (for tagging)
+  purpose:
+    Type: String
+    Default: assessment-2
+    Description: Purpose tag value
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: CAB432-Instance-Role
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !Ref SubnetId
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - sg-032bd1ff8cf77dbb9
+      Tags:
+        - Key: Name
+          Value: A2-Group4-EC2
+        - Key: purpose
+          Value: !Ref purpose
+        - Key: qut-username
+          Value: !Ref QutUsername
+        - Key: qut-username2
+          Value: !Ref QutUsername2
+      UserData: !Base64 |
+        #!/bin/bash
+        set -euxo pipefail
+
+        # Non-interactive apt
+        export DEBIAN_FRONTEND=noninteractive
+
+        # wait for apt/dpkg locks
+        until ! fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for dpkg lock?"; sleep 3
+        done
+
+        # Update package lists
+        sudo apt-get update -y
+        sudo apt-get install -y ca-certificates curl unzip
+
+        # Add Docker's official GPG key:
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+        # Add the repository to Apt sources:
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update -y
+
+        # Install Docker Engine from Ubuntu repos + Compose v2 plugin
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+        # Enable and start Docker
+        systemctl enable --now docker
+
+        # Allow the default Ubuntu user to run docker without sudo
+        usermod -aG docker ubuntu
+
+        # Install AWS cli
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: A2-Group4-UserPool
+      MfaConfiguration: 'ON'
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
+      DeviceConfiguration:
+        ChallengeRequiredOnNewDevice: true
+        DeviceOnlyRememberedOnUserPrompt: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: email_verified
+          AttributeDataType: Boolean
+          Mutable: true
+          Required: false
+      AutoVerifiedAttributes:
+        - email
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+      EmailConfiguration:
+        EmailSendingAccount: DEVELOPER
+        SourceArn: arn:aws:ses:ap-southeast-2:901444280953:identity/cab432.com
+        From: CAB432 logins <logins@cab432.com>
+      EmailVerificationMessage: Your verification code is {####}.
+      EmailVerificationSubject: CAB432 - Please verify your email
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate: []
+      UsernameConfiguration:
+        CaseSensitive: false
+      UserPoolTags:
+        qut-username: !Ref QutUsername
+        qut-username2: !Ref QutUsername2
+        purpose: !Ref purpose
+
+  AdminPool:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admin
+      UserPoolId: !Ref UserPool
+      Description: Group for administrators
+      Precedence: 1 # Lower precedence means higher priority for IAM role assignment
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: a2group4-uploadsbucket223
+
+  ParamUserPoolId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /a2group4/cognito/userPoolID
+      Type: String
+      Value: !Ref UserPool
+      Tags:
+        qut-username: !Ref QutUsername
+        qut-username2: !Ref QutUsername2
+        purpose: !Ref purpose
+
+  ParamUserPoolClientId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /a2group4/cognito/clientID
+      Type: String
+      Value: !Ref UserPoolClient
+      Tags:
+        qut-username: !Ref QutUsername
+        qut-username2: !Ref QutUsername2
+        purpose: !Ref purpose
+
+Outputs:
+  InstanceId:
+    Description: Launched EC2 instance ID
+    Value: !Ref EC2Instance
+
+  PublicIp:
+    Description: Public IPv4 of the instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  AZ:
+    Description: Availability Zone
+    Value: !GetAtt EC2Instance.AvailabilityZone

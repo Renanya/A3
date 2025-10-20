@@ -1,0 +1,62 @@
+version: '3.9'
+
+services:
+  # mariadb:
+  #   image: mariadb:11
+  #   container_name: mariadb
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: mydatabase
+  #     MYSQL_USER: appuser
+  #     MYSQL_PASSWORD: apppassword
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mariadb_data:/var/lib/mysql
+  #   networks:
+  #     - app-network
+
+  backend:
+    # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:backend
+    build:
+      context: ./backend
+    container_name: backend
+    restart: always
+    # depends_on:
+    #   - mariadb
+    # environment:
+    #   DB_HOST: mariadb
+    #   DB_USER: appuser
+    #   DB_PASSWORD: apppassword
+    #   DB_NAME: mydatabase
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    # env_file:
+    #   .env
+
+  frontend:
+    # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:frontend
+    build:
+      context: ./frontend
+    container_name: frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://backend:5000
+      REACT_APP_BASE_URL: ""
+      DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+volumes:
+  mariadb_data:
+
+networks:
+  app-network:
+    driver: bridge

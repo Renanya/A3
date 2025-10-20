@@ -1,0 +1,12 @@
+**/*Zone.Identifier
+.env
+**/*.DS_Store
+backend1
+backend/package-lock.json
+backend/models/users.js:Zone.Identifier
+backend/models/users.js:Zone.Identifier:Zone.Identifier
+backend/models/video.js:Zone.Identifier
+backend/routes/testRoutes.js:Zone.Identifier
+backend/routes/userRoutes.js:Zone.Identifier
+backend/routes/videoRoutes.js:Zone.Identifier
+backend/routes/videoRoutes.js:Zone.Identifier:Zone.Identifier
