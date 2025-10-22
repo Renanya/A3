@@ -34,8 +34,8 @@ services:
       - "5000:5000"
     networks:
       - app-network
-    # env_file:
-    #   .env
+    env_file:
+      .env
 
   frontend:
     # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:frontend
@@ -54,8 +54,8 @@ services:
     networks:
       - app-network
 
-volumes:
-  mariadb_data:
+# volumes:
+#   mariadb_data:
 
 networks:
   app-network:

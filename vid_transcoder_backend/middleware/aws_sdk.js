@@ -1,6 +1,5 @@
 // Code Adapted from:
 //  - Week 4 Practical: S3 blob storage service (Javascript)
-//  - Week 8 Pratical: AWS SQS (Javascript)
 //  - https://stackoverflow.com/questions/11944932/how-to-download-a-file-with-node-js-without-using-third-party-libraries
 
 require('dotenv').config(__dirname);
@@ -30,6 +29,7 @@ const s3Client = new S3.S3Client({ region: region });
 const ssmClient = new SSM.SSMClient({region: region});
 const secClient = new SEC.SecretsManagerClient({region: region});
 const cogClient = new COG.CognitoIdentityProvider({region: region});
+
 // SQS stuff
 const SQS = require("@aws-sdk/client-sqs");
 const sqsQueueUrl = "https://sqs.ap-southeast-2.amazonaws.com/901444280953/a3group16-transcode-queue";
@@ -87,6 +87,8 @@ async function deleteMessageFromSQS(receiptHandle) {
     }
 }
 // End of SQS stuff
+
+
 // Utility Function: Create the S3 Buckets (used in aws_setup.js)
 async function createBuckets() {
     // Utilise Promises to create each bucket and tag them
@@ -358,8 +360,6 @@ async function banUser(userName) {
         })
     })
 }
-
-
 
 // Export Functions for use elsewhere in the application
 module.exports = {
