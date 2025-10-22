@@ -13,7 +13,11 @@ const app = express();
 const userModel = require('./models/users')
 
 // CORS first
-app.use(cors());
+app.use(cors({
+  origin: false,
+  methods: ['GET','PUT','POST','DELETE'],
+  credentials: true,
+}));
 
 // Enable file upload BEFORE body parsers; set limits
 app.use(fileUpload({

@@ -17,25 +17,25 @@ services:
   #   networks:
   #     - app-network
 
-  backend:
-    # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:backend
-    build:
-      context: ./backend
-    container_name: backend
-    restart: always
-    # depends_on:
-    #   - mariadb
-    # environment:
-    #   DB_HOST: mariadb
-    #   DB_USER: appuser
-    #   DB_PASSWORD: apppassword
-    #   DB_NAME: mydatabase
-    ports:
-      - "5000:5000"
-    networks:
-      - app-network
-    env_file:
-      .env
+  # backend:
+  #   # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:backend
+  #   build:
+  #     context: ./backend
+  #   container_name: backend
+  #   restart: always
+  #   # depends_on:
+  #   #   - mariadb
+  #   # environment:
+  #   #   DB_HOST: mariadb
+  #   #   DB_USER: appuser
+  #   #   DB_PASSWORD: apppassword
+  #   #   DB_NAME: mydatabase
+  #   ports:
+  #     - "5000:5000"
+  #   networks:
+  #     - app-network
+  #   env_file:
+  #     .env
 
   frontend:
     # image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11288353/n11288353-assesment1:frontend
@@ -46,17 +46,16 @@ services:
     depends_on:
       - backend
     environment:
-      REACT_APP_API_URL: http://backend:5000
       REACT_APP_BASE_URL: ""
       DANGEROUSLY_DISABLE_HOST_CHECK: "true"
     ports:
       - "3000:3000"
-    networks:
-      - app-network
+#     networks:
+#       - app-network
 
-# volumes:
-#   mariadb_data:
+# # volumes:
+# #   mariadb_data:
 
-networks:
-  app-network:
-    driver: bridge
+# networks:
+#   app-network:
+#     driver: bridge
