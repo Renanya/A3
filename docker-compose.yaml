@@ -43,8 +43,8 @@ services:
       context: ./frontend
     container_name: frontend
     restart: always
-    depends_on:
-      - backend
+    # depends_on:
+    #   - backend
     environment:
       REACT_APP_BASE_URL: ""
       DANGEROUSLY_DISABLE_HOST_CHECK: "true"
