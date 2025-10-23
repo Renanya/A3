@@ -340,43 +340,62 @@ const reformatVideo = async (req, res) => {
     }
     console.log("reformatting video...")
     try {
-    const s3url = await aws_sdk_helpers.readFromUploads(videoData.filename);
-    const outputFileName = `reformatted-${videoData.filename.split('.')[0]}.${newFormat.toLowerCase()}`;
-    const mimeType = getMimeTypeFromFormat(newFormat);
+        // Create output directory if it doesn't exist
+        const outputDirectory = path.join(__dirname, '..', 'output_directory');
+        fs.mkdirSync(outputDirectory, { recursive: true });
+        
+        const s3url = await aws_sdk_helpers.readFromUploads(videoData.filename)
+        const tempInputPath = path.join(__dirname, '..', 'temp', videoData.filename);
+        const outputFileName = `reformatted-${videoData.filename.split('.')[0]}.${newFormat.toLowerCase()}`;
+        const outputPath = path.join(outputDirectory, outputFileName);
 
-
-      if (format.toLowerCase() === newFormat.toLowerCase()) {
-        console.log("same format, streaming directly...");
-        // If same format, stream directly from S3 to client
-        const response = await axios({
-          method: 'get',
-          url: s3url,
-          responseType: 'stream'
+        // Ensure temp directory exists
+        fs.mkdirSync(path.dirname(tempInputPath), { recursive: true });
+        console.log("temp path", tempInputPath)
+        // Download from S3 to temp file
+        await new Promise((resolve, reject) => {
+            axios({
+                method: 'get',
+                url: s3url,
+                responseType: 'stream'
+            })
+            .then(response => {
+                const writer = fs.createWriteStream(tempInputPath);
+                response.data.pipe(writer);
+                writer.on('finish', resolve);
+                writer.on('error', reject);
+            })
+            .catch(reject);
         });
-        response.data.pipe(res, { end: true });
-        return;
-      }
-
-      console.log("formats are different, converting...");
-      // Stream from S3 and convert on the fly
-      const response = await axios({
-        method: 'get',
-        url: s3url,
-        responseType: 'stream'
-      });
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Content-Disposition', `attachment; filename="${outputFileName}"`);
-      console.log("piping through ffmpeg...");
-      ffmpeg(response.data)
-        .toFormat(newFormat)
-        .on('error', (err) => {
-          console.error('FFmpeg error:', err);
-          if (!res.headersSent) {
-            res.status(500).json({ message: 'Error reformating', error: err.message });
-          }
-        })
-        .pipe(res, { end: true }); // Pipe directly to response
-        console.log("piped to response.");
+        console.log("downloaded to temp file")
+        // Check if formats are the same
+        if (format.toLowerCase() === newFormat.toLowerCase()) {
+            // If same format, just copy to output directory
+            fs.copyFileSync(tempInputPath, outputPath);
+            fs.unlinkSync(tempInputPath); // Clean up temp file
+            return res.redirect(307, `/download`); // Adjust this URL to match your routes
+        }
+        console.log("formats are different, converting...")
+        // Perform the conversion
+        await new Promise((resolve, reject) => {
+            ffmpeg(tempInputPath)
+                .toFormat(newFormat)
+                .save(outputPath)
+                .on('end', () => {
+                    fs.unlink(tempInputPath, (err) => {
+                        if (err) console.error('Error deleting temp file:', err);
+                    });
+                    resolve();
+                })
+                .on('error', (err) => {
+                    fs.unlink(tempInputPath, (err) => {
+                        if (err) console.error('Error deleting temp file:', err);
+                    });
+                    reject(err);
+                });
+        });
+        console.log("conversion done, output at:", outputPath)
+        res.status(200).json({ message: 'Video reformatted successfully', outputFileName });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error reformating', error: error.message });

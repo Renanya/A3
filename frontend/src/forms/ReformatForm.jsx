@@ -20,53 +20,40 @@ function ReformatForm(videos) {
     const handleReformat = async (e) => {
         e.preventDefault();
 
-        try {
-            setShowText(true);
+    try {
+        setShowText(true);
 
-            const payload = {
-                format,
-                videoData: {
-                    filename: videos.filename,
-                    mimetype: videos.mimetype,
-                    filepath: videos.filepath,
-                    codec: videos.codec
-                }
-            };
-
-            console.log("Sending reformat payload:", payload);
-
-            const response = await axios.post('/reformat', payload, { responseType: 'blob' });
-
-            if (response.status === 200) {
-                setShowText(false);
-                // Get the filename from Content-Disposition header if available
-                let filename = "reformatted-video." + format;
-                const disposition = response.headers['content-disposition'];
-                if (disposition && disposition.indexOf('filename=') !== -1) {
-                    filename = disposition.split('filename=')[1].replace(/"/g, '');
-                }
-                // Create a link and trigger download
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                link.parentNode.removeChild(link);
-                setShowDownloadButton(false);
-                alert("Download successful");
-            } else {
-                alert("Status code not 200");
-            }
-        } catch (err) {
-            setShowText(false);
-            if (err.response?.data?.message) {
-                const errorMessage = `Error ${err.response.status}: ${err.response.data.message}`;
-                alert(errorMessage);
-            } else {
-                console.error(err);
-            }
+        const payload = {
+        format,
+        codec,
+        videoData: {
+            filename: videos.filename,
+            mimetype: videos.mimetype,
+            filepath: videos.filepath,
+            codec: videos.codec
         }
+        };
+
+        console.log("Sending reformat payload:", payload);
+
+        const response = await axios.post('/reformat', payload);
+
+        if (response.status === 200) {
+        setShowText(false);
+        setShowDownloadButton(true);
+        alert("successful");
+        } else {
+        alert("Status code not 200");
+        }
+    } catch (err) {
+        setShowText(false);
+        if (err.response?.data?.message) {
+        const errorMessage = `Error ${err.response.status}: ${err.response.data.message}`;
+        alert(errorMessage);
+        } else {
+        console.error(err);
+        }
+    }
     };
 
     const handleDownloads = async (e) => {
