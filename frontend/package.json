@@ -2,7 +2,7 @@
   "name": "video-transcoding",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://54.206.39.169:5000/",
+  "proxy": "http://3.25.232.4 :5000/",
   "dependencies": {
     "@heroicons/react": "^2.1.5",
     "@react-oauth/google": "^0.12.1",
